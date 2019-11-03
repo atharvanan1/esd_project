@@ -1,0 +1,17 @@
+﻿"Symbol";"Value";"Unit";
+"SUPPLIER_NAME";"RS Components";"";
+"TraceParts.PartVersion";"1.2.3";"";
+"SUPPLIER";"TE Connectivity";"";
+"TraceParts.PartStatus";"Published";"";
+"TRACEPARTS";"TRACEPARTS";"";
+"RS_STOCK_NUMBER";"6128233";"";
+"REVISION";"A";"";
+"DESIGN";"TE Connectivity 2.54mm Pitch Vertical 28 Way, Through Hole Stamped Pin Closed Frame IC Dip Socket, 1";"";
+"TraceParts.InstanceId";"10-15062010-1616368Q4W9AK9EENAW9IGFCFAPX1JG";"";
+"TraceParts.PartLanguage";"en";"";
+"TraceParts.PartTitle";"TE Connectivity 2.54mm Pitch Vertical 28 Way, Through Hole Stamped Pin Closed Frame IC Dip Socket, 1";"";
+"REFERENCE";"1-390261-9";"";
+"TIMESTAMP";"26/05/2017 11:59";"";
+"TraceParts.PartNumber";"10-15062010-161636";"";
+"TraceParts.PartStatusId";"";"";
+"TraceParts.ClassPath";"RS_COMPONENTS:/F_RS_COMPONENTS/PSSS_435563/PSS_435623/PSF_435628/10-15062010-161636";"";

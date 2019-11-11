@@ -1,0 +1,18 @@
+Enter Programming Mode
+The following algorithm puts the device in parallel (high-voltage) programming mode:
+1. Set prog_enable pins listed in Table 27-12 on page 246 to “0000”, RESET pin to 0V and VCC to 0V.
+2. Apply 4.5 to 5.5V between VCC and GND.
+Ensure that VCC reaches at least àpçV within the next 20μs.
+3. Wait 20 to 60μs, and apply 11.5 to 12.5V to RESET.
+4. Keep the Prog_enable pins unchanged for at least10μs after the high-voltage has been applied to ensure the
+prog_enable signature has been latched.
+5. Wait at least 300μs before giving any parallel programming commands.
+6. Exit programming mode by power the device down or by bringing RESET pin to 0V.
+If the rise time of the VCC is unable to fulfill the requirements listed above, the following alternative algorithm can be used.
+1. Set prog_enable pins listed in Table 27-12 on page 246 to “0000”, RESET pin to 0V and VCC to 0V.
+2. Apply 4.5 to 5.5V between VCC and GND.
+3. Monitor VCC, and as soon as VCC reaches 0.9 to 1.1V, apply 11.5 to 12.5V to RESET.
+4. Keep the prog_enable pins unchanged for at least 10μs after the high-voltage has been applied to ensure the
+prog_enable signature has been latched.
+5. Wait until VCC actually reaches 4.5 to 5.5V before giving any parallel programming commands.
+6. Exit programming mode by power the device down or by bringing RESET pin to 0V.

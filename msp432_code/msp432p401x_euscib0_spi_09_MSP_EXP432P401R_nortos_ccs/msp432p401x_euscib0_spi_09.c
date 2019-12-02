@@ -78,9 +78,12 @@
 #include "ti/devices/msp432p4xx/inc/msp.h"
 #include <stdint.h>
 
-static uint8_t RXData = 0;
-static uint8_t TXData[] = {0xAC, 0x53, 0x00, 0x00};
-static uint8_t index = 0;
+static uint8_t RXData[] = {0xFF, 0xFF, 0xFF, 0xFF};
+static uint8_t TXData[] = {0xAC, 0x53, 0x00, 0x00, 0x00, 0x00};
+//static uint8_t index = 0;
+uint8_t Vendor_Code = 0;
+uint8_t Part_Family = 0;
+uint8_t Part_Number = 0;
 
 // time = 6000, when delay is 20ms
 void delay(uint32_t time)
@@ -91,7 +94,7 @@ void delay(uint32_t time)
 int main(void)
 {
     volatile uint32_t i;
-    uint8_t previousData;
+//    uint8_t previousData;
 
     WDT_A->CTL = WDT_A_CTL_PW |             // Stop watchdog timer
             WDT_A_CTL_HOLD;
@@ -99,21 +102,13 @@ int main(void)
     P1->OUT &= ~BIT0;
     P1->DIR |= BIT0;                        // Set P1.0 LED
 
-    P1->OUT &= ~BIT5;
-    P1->DIR |= BIT5;
+//    P1->OUT &= ~BIT5;
+//    P1->DIR |= BIT5;
 
     P3->OUT |= BIT0;
     P3->DIR |= BIT0;
 
-    P3->OUT &= ~BIT0;
-    P1->OUT &= ~BIT5;
-    P1->OUT |= BIT0;
-
-    delay(6000);
-
-    P1->OUT &= ~BIT0;
-
-    P3->OUT |= BIT0;
+//    delay(2000);
 
     P1->SEL0 |= BIT5 | BIT6 | BIT7;         // Set P1.5, P1.6, and P1.7 as
                                             // SPI pins functionality
@@ -122,79 +117,278 @@ int main(void)
     EUSCI_B0->CTLW0 = EUSCI_B_CTLW0_SWRST | // Remain eUSCI state machine in reset
             EUSCI_B_CTLW0_MST |             // Set as SPI master
             EUSCI_B_CTLW0_SYNC |            // Set as synchronous mode
-            EUSCI_B_CTLW0_CKPL |            // Set clock polarity high
+            EUSCI_B_CTLW0_CKPH |
             EUSCI_B_CTLW0_MSB;              // MSB first
-
-    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SSEL__ACLK; // ACLK
-    EUSCI_B0->BRW = 0x01;                   // /2,fBitClock = fBRCLK/(UCBRx+1).
+    EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_CKPL;
+//    EUSCI_B0->IE |= EUSCI_B_IE_RXIE;
+    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SSEL__SMCLK; // ACLK
+    EUSCI_B0->BRW = 0x30;                   // /2,fBitClock = fBRCLK/(UCBRx+1).
     EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;// Initialize USCI state machine
 
-    P3->OUT &= ~BIT0;
-
     // Enable global interrupt
-    __enable_irq();
+//    __enable_irq();
 
     // Enable eUSCI_B0 interrupt in NVIC module
-    NVIC->ISER[0] = 1 << ((EUSCIB0_IRQn) & 31);
+//    NVIC->ISER[0] = 1 << ((EUSCIB0_IRQn) & 31);
 
-    // Wake up on exit from ISR
-    SCB->SCR &= ~SCB_SCR_SLEEPONEXIT_Msk;
+//    for(uint8_t k = 0; k < 10; k++)
+//    {
+    P3->OUT &= ~BIT0;
+    delay(20);
+    P3->OUT |= BIT0;
+    delay(20);
 
-    // Ensures SLEEPONEXIT takes effect immediately
-    __DSB();
     P3->OUT &= ~BIT0;
 
-    while(1)
+    delay(8000);
+    delay(8000);
+    delay(8000);
+    delay(8000);
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
     {
-        EUSCI_B0->IFG |= EUSCI_B_IFG_TXIFG;// Clear TXIFG flag
-        EUSCI_B0->IE |= EUSCI_B_IE_TXIE;    // Enable TX interrupt
-        __sleep();
-        __no_operation();                   // For debug,Remain in LPM0
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
 
+    // Vendor Code Read
 
-        // Check the received data
-        if(index == 0)
-        {
-            previousData = 0;
-        }
-        else
-        {
-            previousData = TXData[index - 1];
-        }
-        if (RXData != (previousData))
-        {
-            // If the Received data is not equal to TXData-1, then
-            // Set P1.0 LED
-            P1->OUT |= BIT0;
-        }
-        else
-        {
-            P1->OUT &= ~BIT0;
-        }
+    TXData[0] = 0x30;
+    TXData[1] = 0x00;
+    TXData[2] = 0x00;
+    TXData[3] = 0x00;
 
-        for (i = 2000; i > 0; i--);         // Delay before next transmission
-        index++;                           // Increment transmit data
-        if(index == 4)
+    if(RXData[2] == 0x53)
+    {
+        P1->OUT |= BIT0;
+        for(volatile uint8_t jack = 0; jack < 4; jack++)
         {
-            __disable_irq();
-            while(1);
+            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+            EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+            while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+            RXData[jack] = EUSCI_B0->RXBUF;
         }
     }
+
+    Vendor_Code = RXData[3];
+
+    // Part Family Code Read
+
+    TXData[0] = 0x30;
+    TXData[1] = 0x00;
+    TXData[2] = 0x01;
+    TXData[3] = 0x00;
+
+    if(RXData[3] == 0x1E)
+    {
+        P1->OUT |= BIT0;
+        for(volatile uint8_t jack = 0; jack < 4; jack++)
+        {
+            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+            EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+            while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+            RXData[jack] = EUSCI_B0->RXBUF;
+        }
+    }
+
+    Part_Family = RXData[3];
+
+    // Part Number Read
+    TXData[0] = 0x30;
+    TXData[1] = 0x00;
+    TXData[2] = 0x02;
+    TXData[3] = 0x00;
+
+    if(RXData[3] == 0x95)
+    {
+        P1->OUT |= BIT0;
+        for(volatile uint8_t jack = 0; jack < 4; jack++)
+        {
+            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+            EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+            while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+            RXData[jack] = EUSCI_B0->RXBUF;
+        }
+    }
+
+    Part_Number = RXData[3];
+
+    // High Byte Read
+
+    TXData[0] = 0x28;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x00;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+    uint8_t data_high = RXData[3];
+
+    // Low Byte Read
+
+    TXData[0] = 0x20;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x00;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+    uint8_t data_low = RXData[3];
+
+    // Load Data at High Byte
+
+    TXData[0] = 0x48;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x55;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+    // Load Data at Low Byte
+
+    TXData[0] = 0x40;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x55;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+    //-------------------------------------------------------
+
+    // Write Page Buffer in Program Memory
+
+    TXData[0] = 0x4C;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x00;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+   delay(2000);
+
+    // High Byte Read
+
+    TXData[0] = 0x28;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x00;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+    data_high = RXData[3];
+
+    // Low Byte Read
+
+    TXData[0] = 0x20;
+    TXData[1] = 0x01;
+    TXData[2] = 0x02;
+    TXData[3] = 0x00;
+
+    for(volatile uint8_t jack = 0; jack < 4; jack++)
+    {
+        while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG));
+        EUSCI_B0->TXBUF = TXData[jack];           // Transmit characters
+        while(!((EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)));
+        RXData[jack] = EUSCI_B0->RXBUF;
+    }
+
+    data_low = RXData[3];
+
+//    delay(2000);
+    P3->OUT |= BIT0;
+    P1->OUT &= ~BIT0;
+//    delay(2000);
+//    }
+    while(1);
+
+//    while(1)
+//    {
+//        __sleep();
+//        __no_operation();                   // For debug,Remain in LPM0
+//
+//
+//        // Check the received data
+//        if(index == 0)
+//        {
+//            previousData = 0;
+//        }
+//        else
+//        {
+//            previousData = TXData[index - 1];
+//        }
+//        if (RXData != (previousData))
+//        {
+//            // If the Received data is not equal to TXData-1, then
+//            // Set P1.0 LED
+//            P1->OUT |= BIT0;
+//        }
+//        else
+//        {
+//            P1->OUT &= ~BIT0;
+//        }
+//
+////        for (i = 2000; i > 0; i--);         // Delay before next transmission
+////        delay(100);
+//        index++;                           // Increment transmit data
+//        if(index == 4)
+//        {
+//            __disable_irq();
+//            P3->OUT |= BIT0;
+//            while(1);
+//        }
+//    }
 }
 
 // SPI interrupt service routine
-void EUSCIB0_IRQHandler(void)
-{
-    if (EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)
-    {
-        EUSCI_B0->TXBUF = TXData[index];           // Transmit characters
-        EUSCI_B0->IE &= ~EUSCI_B__TXIE;
-
-        // Wait till a character is received
-        while (!(EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG));
-        RXData = EUSCI_B0->RXBUF;
-
-        // Clear the receive interrupt flag
-        EUSCI_B0->IFG &= ~EUSCI_B_IFG_RXIFG;
-    }
-}
+//void EUSCIB0_IRQHandler(void)
+//{
+//    if (EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG)
+//    {
+//        RXData = EUSCI_B0->RXBUF;
+//        if(RXData == 0x53)
+//        {
+//            P1->OUT |= BIT0;
+//        }
+//
+//        // Clear the receive interrupt flag
+//        EUSCI_B0->IFG &= ~EUSCI_B_IFG_RXIFG;
+//    }
+//}

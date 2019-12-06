@@ -1,6 +1,7 @@
 # Writeup for future reference
 
 ### Working with SPI on MSP432
+1. CKPH setting was wrong, hence there was no SPI transaction.
 
 ### Working with ISP with AVR Processors
 1. ISP works fine.

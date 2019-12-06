@@ -1,4 +1,18 @@
+/*
+ * hex_parse.c
+ *
+ *  Created on: Dec 3, 2019
+ *      Author: athar
+ */
+
+
 #include "hex_parser.h"
+
+void hex_parse(hex_file_t file)
+{
+    char* lines[500];
+    uint16_t number_of_lines = calculateNumberOfLines(file.file_pointer, file.number_of_characters);
+}
 
 command_t hex_line_parse(const char* line)
 {
@@ -62,9 +76,9 @@ command_t hex_line_parse(const char* line)
     return line_command;
 }
 
-uint8_t calculateNumberOfLines(const char* buffer, uint16_t length)
+uint16_t calculateNumberOfLines(const char* buffer, uint16_t length)
 {
-    uint8_t number_of_lines = 0;;
+    uint16_t number_of_lines = 0;;
     for(uint16_t index = 0; index < length; index++)
     {
         if(*(buffer + index) == '\n')
@@ -74,3 +88,5 @@ uint8_t calculateNumberOfLines(const char* buffer, uint16_t length)
     }
     return number_of_lines;
 }
+
+

@@ -1,1 +1,0 @@
-"./hex_parser.obj" "./main.obj" "./startup_msp432e401y_ccs.obj" "./system_msp432e401y.obj" "../msp432e401y.cmd" -llibc.a 

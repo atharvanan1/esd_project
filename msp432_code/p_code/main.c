@@ -118,53 +118,55 @@ int main(void)
     CRC_Flag = 0;
     CRC_Result = 0;
 
-    while(CRC_Flag == 0);
+    __DSB();
 
-   CRC_Init();
+    __sleep();
 
-   for(CRC_Index = 0; CRC_Index < RX_Index; CRC_Index++ )
-   {
-       CRC_calculation(buffer[CRC_Index]);
-   }
-   CRC_Result_master(&CRC_Result);
+    CRC_Init();
 
-   RX_Index = RX_Index - 1;
-   if(buffer[RX_Index] != (uint8_t)CRC_Result)
-   {
-       Turn_On(LED_RGB_R);
-       // Send Transmission FAIL
-       // Keep SPI coding disabled
-   }
-   else
-   {
-       Turn_On(LED_RGB_B);
-       // Send Transmission Success
-       // Enable SPI coding
-   }
+    for(CRC_Index = 0; CRC_Index < RX_Index; CRC_Index++ )
+    {
+        CRC_calculation(buffer[CRC_Index]);
+    }
+    CRC_Result_master(&CRC_Result);
 
-   buffer[RX_Index] = '\n';
-   RX_Index = RX_Index + 1;
-   buffer[RX_Index] = '\0';
+    RX_Index = RX_Index - 1;
+    if(buffer[RX_Index] != (uint8_t)CRC_Result)
+    {
+        Turn_On(LED_RGB_R);
+        // Send Transmission FAIL
+        // Keep SPI coding disabled
+    }
+    else
+    {
+        Turn_On(LED_RGB_B);
+        // Send Transmission Success
+        // Enable SPI coding
+    }
 
-   hex_file_t hex_file = {
-                          RX_Index,
-                          (char*) buffer
-   };
+    buffer[RX_Index] = '\n';
+    RX_Index = RX_Index + 1;
+    buffer[RX_Index] = '\0';
 
-   // Make RX_Index 0 again for new data
-   RX_Index = 0;
-   // Should be in a critical section
-   EUSCI_A2->CTLW0 |= EUSCI_A_CTLW0_SWRST;
+    hex_file_t hex_file = {
+                           RX_Index,
+                           (char*) buffer
+    };
 
-   hex_parse(&hex_file);
-   programming_enable();
-   chip_erase();
-   while(poll_busy() == ispBUSY);
-   programming_enable();
-//   delay(3000);
-   program();
-   Turn_Off(LED_RGB_R);
-   Turn_On(LED_RGB_B);
-   P3->OUT |= BIT0;
-   while(1);
+    // Make RX_Index 0 again for new data
+    RX_Index = 0;
+    // Should be in a critical section
+    EUSCI_A2->CTLW0 |= EUSCI_A_CTLW0_SWRST;
+
+    hex_parse(&hex_file);
+    programming_enable();
+    chip_erase();
+    while(poll_busy() == ispBUSY);
+    programming_enable();
+    //   delay(3000);
+    program();
+    Turn_Off(LED_RGB_R);
+    Turn_On(LED_RGB_B);
+    P3->OUT |= BIT0;
+    while(1);
 }

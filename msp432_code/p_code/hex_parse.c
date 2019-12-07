@@ -51,7 +51,7 @@ command_t hex_line_parse(const char* line)
     line_command.address = 0;
     line_command.size= 0;
     line_command.data_type = 0;
-    line_command.checksum_validity = 0;
+    line_command.checksum_validity = checksumInvalid;
     for(uint8_t index = 0; index < 16; index++)
     {
         line_command.data[index] = 0;
@@ -64,7 +64,7 @@ command_t hex_line_parse(const char* line)
     uint8_t index = 0;
     uint8_t data_index = 0;
     uint8_t c = 0;
-    while((c = *(line + index)) != '\n')
+    while((c = *(line + index)) != 0x0a)
     {
         if(c >= '0' && c <= '9')
                 c = c - '0';

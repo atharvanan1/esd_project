@@ -12,5 +12,7 @@
 #include "isp_commands.h"
 #include "hex_parse.h"
 #include "state_machine.h"
+#include "uart_library.h"
+#include "crc_library.h"
 
 #endif /* MAIN_H_ */

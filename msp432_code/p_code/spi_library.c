@@ -28,7 +28,7 @@ void spi_init(void)
     EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SSEL__SMCLK;
 
     // Set bit clock speed
-    EUSCI_B0->BRW = 0x30;
+    EUSCI_B0->BRW = 0xB0;   // Keep FE when programming
 
     // Start EUSCI Module
     EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;

@@ -78,6 +78,8 @@ MEMORY
 
 /* Section allocation in memory */
 
+--stack_size=20000
+
 SECTIONS
 {
 #ifndef gen_crc_table

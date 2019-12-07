@@ -33,6 +33,13 @@ void command_execute(uint8_t* tx_buff, uint8_t* rx_buff)
     }
 }
 
+void program(void)
+{
+    for(uint8_t index = 0; index < 200; index++)
+    {
+        program_flash(commands[index]);
+    }
+}
 /*---------------Execution Instructions---------------*/
 
 isp_status_t programming_enable(void)
@@ -67,16 +74,9 @@ isp_status_t chip_erase(void)
     command_execute(Command, RXBuff);
 
     // TODO: Add delay of 9 ms or maybe poll? Test the code out
-    while(poll_busy() == ispBUSY);
+    delay(20);
 
-    // Verify Erase
-    uint8_t verify_tmp_high = read_flash_high(0x0000);
-    uint8_t verify_tmp_low = read_flash_low(0x0000);
-
-    if(verify_tmp_high == 0xFF && verify_tmp_low == 0xFF)
-        return ispSUCCESS;
-    else
-        return ispFAIL;
+    P3->OUT |= BIT0;
 }
 
 isp_status_t poll_busy(void)
@@ -89,7 +89,40 @@ isp_status_t poll_busy(void)
         return ispBUSY;
     else
         return ispNOTBUSY;
+}
 
+void program_flash(command_t command)
+{
+    uint16_t address_index = command.address;
+    if(command.data_type != 0x00)
+        ;
+    else if(command.size == 0)
+        ;
+    else
+    {
+        while(poll_busy() == ispBUSY);
+
+        for(uint8_t index = 0; index < command.size; index++)
+        {
+            if(index % 2 == 0)
+            {
+                load_flash_low(address_index, command.data[index]);
+            }
+            else
+            {
+                load_flash_high(address_index, command.data[index]);
+                address_index++;
+            }
+        }
+        write_flash_page(command.address);
+
+        while(poll_busy() == ispBUSY);
+
+    //    if(verify_flash(command.address, command.data) == ispVERIFYFAIL);
+    //    {
+    //        while(1);
+    //    }
+    }
 }
 
 /*-----------------Read Instructions-------------------*/
@@ -251,7 +284,7 @@ isp_status_t verify_flash(uint16_t start_address, uint8_t* data_array)
     uint8_t tmp_array[16];
     for(uint8_t array_index = 0, address_index = 0; array_index < 16; array_index++)
     {
-        if(array_index % 2 == 0)
+        if(array_index & 0x01 != 0)
         {
             tmp_array[array_index] = read_flash_low(start_address + address_index);
         }

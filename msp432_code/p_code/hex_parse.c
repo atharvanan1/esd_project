@@ -8,10 +8,9 @@
 
 #include "hex_parse.h"
 
-command_t** hex_parse(hex_file_t* file)
+void hex_parse(hex_file_t* file)
 {
     char* line[50];
-    command_t** commands = (command_t**) malloc(sizeof(command_t *) * 50);
     uint16_t index = 0;
     uint16_t line_count = 0;
     int8_t ch = 0;
@@ -19,8 +18,9 @@ command_t** hex_parse(hex_file_t* file)
     // Line Zero will always start from first address
     line[0] = file->file_pointer;
 
+    index++;
     // Till the end of file - change the EOF value
-    while((ch = *(file->file_pointer + index)) != '@')
+    while((ch = *(file->file_pointer + index)) != '\0')
     {
         // Registering new lines as lines, and added them into line
         // buffer.
@@ -28,10 +28,10 @@ command_t** hex_parse(hex_file_t* file)
         // pointer to the index. 0 is already filled, 1, 2, and... so on
         // index + 1 ---> because we are going through current line and will
         // store the next line, and not current line.
-        if(ch == '\n')
+        if(ch == ':')
         {
             line_count++;
-            line[line_count] = file->file_pointer + index + 1;
+            line[line_count] = file->file_pointer + index;
         }
         index++;
     }
@@ -43,14 +43,20 @@ command_t** hex_parse(hex_file_t* file)
     {
         commands[index] = hex_line_parse(line[index]);
     }
-
-    return commands;
 }
 
-command_t* hex_line_parse(const char* line)
+command_t hex_line_parse(const char* line)
 {
-    command_t* line_command = NULL;
-    line_command = (command_t *) malloc(sizeof(command_t));
+    command_t line_command;
+    line_command.address = 0;
+    line_command.size= 0;
+    line_command.data_type = 0;
+    line_command.checksum_validity = 0;
+    for(uint8_t index = 0; index < 16; index++)
+    {
+        line_command.data[index] = 0;
+    }
+
     uint8_t calculatedChecksum = 0;
     uint8_t receivedChecksum = 0;
 
@@ -69,19 +75,19 @@ command_t* hex_line_parse(const char* line)
 
         if(index >= 1 && index <= 2)
         {
-            line_command->size = line_command->size * 16 + c;
+            line_command.size = line_command.size * 16 + c;
         }
         else if(index >= 3 && index <= 6)
         {
-            line_command->address = line_command->address * 16 + c;
+            line_command.address = line_command.address * 16 + c;
         }
         else if(index >= 7 && index <= 8)
         {
-            line_command->data_type = line_command->data_type * 16 + c;
+            line_command.data_type = line_command.data_type * 16 + c;
         }
         else if(index >= 9 && index < 41)
         {
-            line_command->data[data_index] = line_command->data[data_index] * 16 + c;
+            line_command.data[data_index] = line_command.data[data_index] * 16 + c;
                 if(index % 2 == 0)
                         data_index++; //well done
         }
@@ -92,24 +98,27 @@ command_t* hex_line_parse(const char* line)
         index++;
     }
 
-    calculatedChecksum = line_command->size + ((line_command->address & 0xFF00) >> 8) \
-            + (line_command->address & 0xFF) + line_command->data_type;
+    calculatedChecksum = line_command.size + ((line_command.address & 0xFF00) >> 8) \
+            + (line_command.address & 0xFF) + line_command.data_type;
 
-    for(index = 0; index < line_command->size; index++)
+    for(index = 0; index < line_command.size; index++)
     {
-        calculatedChecksum += line_command->data[index];
+        calculatedChecksum += line_command.data[index];
     }
 
     calculatedChecksum = ~calculatedChecksum + 1;
 
     if(receivedChecksum == calculatedChecksum)
     {
-        line_command->checksum_validity = checksumValid;
+        line_command.checksum_validity = checksumValid;
     }
     else
     {
-        line_command->checksum_validity = checksumInvalid;
+        line_command.checksum_validity = checksumInvalid;
     }
+
+    // Changing the address for ATmega328p specific memory
+    line_command.address = line_command.address >> 1;
 
     // This pointer shall be freed by function that has finished usage
     return line_command;

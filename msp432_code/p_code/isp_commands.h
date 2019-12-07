@@ -9,6 +9,7 @@
 #define ISP_COMMANDS_H_
 #include "spi_library.h"
 #include "msp.h"
+#include "hex_parse.h"
 
 typedef enum {
     ispSUCCESS,
@@ -25,12 +26,14 @@ typedef enum {
     PartNumber,
 } sig_byte_t;
 
-void isp_init(void);
+void ISP_Init(void);
 void delay(uint32_t time);
 void command_execute(uint8_t* txbuff, uint8_t* rxbuff);
+void program(void);
 isp_status_t programming_enable(void);
 isp_status_t chip_erase(void);
 isp_status_t poll_busy(void);
+void program_flash(command_t command);
 uint8_t read_signature_byte(sig_byte_t signature_byte);
 uint8_t read_flash_high(uint16_t address);
 uint8_t read_flash_low(uint16_t address);
@@ -50,5 +53,7 @@ void write_fuse_bits(uint8_t data);
 void write_fuse_high_bits(uint8_t data);
 void write_ex_fuse_bits(uint8_t data);
 isp_status_t verify_flash(uint16_t start_address, uint8_t* data_array);
+
+//extern system_state_t system;
 
 #endif /* ISP_COMMANDS_H_ */

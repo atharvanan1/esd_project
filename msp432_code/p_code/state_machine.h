@@ -50,6 +50,7 @@ typedef struct {
     uint8_t reception_ready;
     error_t error_flag;
     uint8_t button_pressed;
+    uint8_t command_write;
 } system_state_t;
 
 void End_Program(void);

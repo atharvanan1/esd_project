@@ -10,5 +10,7 @@
 #include "msp.h"
 #include "led_control.h"
 #include "isp_commands.h"
+#include "hex_parse.h"
+#include "state_machine.h"
 
 #endif /* MAIN_H_ */

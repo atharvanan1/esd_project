@@ -41,7 +41,9 @@ typedef struct {
 
 // Function Prototypes
 uint16_t calculateNumberOfLines(const char* buffer, uint16_t length);
-command_t** hex_parse(hex_file_t* file);
-command_t* hex_line_parse(const char* line);
+void hex_parse(hex_file_t* file);
+command_t hex_line_parse(const char* line);
+
+extern command_t commands[200];
 
 #endif /* HEX_PARSE_H_ */

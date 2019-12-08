@@ -13,7 +13,6 @@ void bt_send_string(char *str)
     {
         while(!(EUSCI_A2->IFG & EUSCI_A_IFG_TXIFG));
         EUSCI_A2->TXBUF = *(str++);
-
     }
 }
 

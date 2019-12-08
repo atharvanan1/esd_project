@@ -1,7 +1,9 @@
 
 
+
 #ifndef STATE_MACHINE_STATE_MACHINE_H_
 #define STATE_MACHINE_STATE_MACHINE_H_
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "led_control.h"
@@ -10,22 +12,23 @@
 
 typedef enum {
     eStart,
-    eQuery_Reception,
-    eData_Reception,
-    eEnd_Of_Data_Reception,
-    eProcessing_Finish,
-    eProgram_Button_Pressed,
-    eProgrammingDone,
-    eVerifyFail,
-    eVerifySuccess,
-    eCRC_Error,
+    eRX_Start,
+    eRX_Finish,
+    eProcessing_Done,
     eChecksum_Error,
+    eCRC_Error,
+    eButton_Pressed,
+    eChip_Erased,
+    eProgramming,
+    eProgramming_Done,
+    eVerify,
+    eVerify_Successful,
+    eVerify_Failed,
     eError,
 } event_t;
 
 typedef enum {
-    sReception_Wait,
-    sReceive,
+    sReceive_Data,
     sProcess_Data,
     sProgramming_Ready,
     sProgramming,
@@ -51,13 +54,13 @@ typedef struct {
     error_t error_flag;
     uint8_t button_pressed;
     uint8_t command_write;
-} system_state_t;
+} full_system_state_t;
 
 void End_Program(void);
 state_machine_t* State_Machine_Init(void);
 void State_Machine_End(state_machine_t* sm);
 void Set_Event(state_machine_t* sm, event_t event);
 void Set_State(state_machine_t* sm, state_t state);
-void Event_Handler(state_machine_t* sm, system_state_t* system);
+void Event_Handler(state_machine_t* sm, full_system_state_t* full_system);
 
 #endif /* STATE_MACHINE_H_ */

@@ -39,7 +39,7 @@
 #include "main.h"
 
 //state_machine_t* StateMachine = NULL;
-//system_state_t system = {/*Reset values*/};
+full_system_state_t full_system = {0, errNO_Error, 0, 0};
 
 
 /***********************************************************************
@@ -93,80 +93,51 @@ void Init(void)
     CS->KEY = 0;                            // Lock CS module from unintended accesses
 
     LED_Init();
-    UART_Init();
-    ISP_Init();
+//    UART_Init();
+//    ISP_Init();
 //    StateMachine = State_Machine_Init();
 }
 
 int main(void)
 {
     Init();
-    // If slave is ready to receive program
-    // Set when the programmer is ready to receive code
-    Start = 1;
-    if(1 == Start)
+
+    // Configure UART pins
+    P1->SEL0 |= BIT2 | BIT3;                // set 2-UART pin as secondary function
+
+    // Configure UART
+    EUSCI_A0->CTLW0 |= EUSCI_A_CTLW0_SWRST; // Put eUSCI in reset
+    EUSCI_A0->CTLW0 = EUSCI_A_CTLW0_SWRST | // Remain eUSCI in reset
+            EUSCI_B_CTLW0_SSEL__SMCLK;      // Configure eUSCI clock source for SMCLK
+    // Baud Rate calculation
+    // 12000000/(16*9600) = 78.125
+    // Fractional portion = 0.125
+    // User's Guide Table 21-4: UCBRSx = 0x10
+    // UCBRFx = int ( (78.125-78)*16) = 2
+    EUSCI_A0->BRW = 78;                     // 12000000/16/9600
+    EUSCI_A0->MCTLW = (2 << EUSCI_A_MCTLW_BRF_OFS) |
+            EUSCI_A_MCTLW_OS16;
+
+    EUSCI_A0->CTLW0 &= ~EUSCI_A_CTLW0_SWRST; // Initialize eUSCI
+    EUSCI_A0->IFG &= ~EUSCI_A_IFG_RXIFG;    // Clear eUSCI RX interrupt flag
+
+    state_machine_t* state_machine = NULL;
+    state_machine = State_Machine_Init();
+    while(1)
     {
-        // UART IRQ to be disabled before Start bit
-        // Enable UART IRQ
-        NVIC->ISER[0] = 1 << ((EUSCIA2_IRQn) & 31);
-        Start = 0;
-        while(!(EUSCI_A2 ->IFG & EUSCI_A_IFG_TXIFG));
-        EUSCI_A2->TXBUF = 'S';
+        Event_Handler(state_machine, &full_system);
     }
-
-    // Should be in a critical section
-    CRC_Flag = 0;
-    CRC_Result = 0;
-
-    __DSB();
-
-    __sleep();
-
-    CRC_Init();
-
-    for(CRC_Index = 0; CRC_Index < RX_Index; CRC_Index++ )
-    {
-        CRC_calculation(buffer[CRC_Index]);
-    }
-    CRC_Result_master(&CRC_Result);
-
-    RX_Index = RX_Index - 1;
-    if(buffer[RX_Index] != (uint8_t)CRC_Result)
-    {
-        Turn_On(LED_RGB_R);
-        // Send Transmission FAIL
-        // Keep SPI coding disabled
-    }
-    else
-    {
-        Turn_On(LED_RGB_B);
-        // Send Transmission Success
-        // Enable SPI coding
-    }
-
-    buffer[RX_Index] = '\n';
-    RX_Index = RX_Index + 1;
-    buffer[RX_Index] = '\0';
-
-    hex_file_t hex_file = {
-                           RX_Index,
-                           (char*) buffer
-    };
-
-    // Make RX_Index 0 again for new data
-    RX_Index = 0;
-    // Should be in a critical section
-    EUSCI_A2->CTLW0 |= EUSCI_A_CTLW0_SWRST;
-
-    hex_parse(&hex_file);
-    programming_enable();
-    chip_erase();
-    while(poll_busy() == ispBUSY);
-    programming_enable();
-    //   delay(3000);
-    program();
-    Turn_Off(LED_RGB_R);
-    Turn_On(LED_RGB_B);
-    P3->OUT |= BIT0;
-    while(1);
 }
+//
+//int putchar(int _x)
+//{
+//    while(!(EUSCI_A0->IFG & EUSCI_A_IFG_TXIFG));
+//    EUSCI_A0->TXBUF = _x;
+//    return _x;
+//}
+//
+//int getchar(void)
+//{
+//    while(!(EUSCI_A0->IFG & EUSCI_A_IFG_RXIFG));
+//    return EUSCI_A0->RXBUF;
+//}

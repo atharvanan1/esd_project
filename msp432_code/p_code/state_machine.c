@@ -9,22 +9,6 @@
 
 #include "state_machine.h"
 
-uint8_t Button_Pressed_Flag = 0;
-uint8_t checksum_error = 0;
-uint8_t crc_error = 0;
-uint8_t RX_Complete = 0;
-uint8_t RX_Flag = 0;
-uint8_t Verification_Successful = 0;
-
-void put_string(char *str)
-{
-    while(*str!='\0')
-    {
-        while(!(EUSCI_A0->IFG & EUSCI_A_IFG_TXIFG));
-        EUSCI_A0->TXBUF = *(str++);
-    }
-}
-
 /*
  * Function - End_Program
  * Brief - ends the program by going into infinite loop
@@ -103,30 +87,38 @@ static inline void Receive_Data_State(state_machine_t* sm, full_system_state_t* 
 {
     if(sm->event == eStart)
     {
-//        __DSB();
-//        __sleep();
-        put_string("State: Receive Data; Event: Start\n\r");
-        while(RX_Flag == 0);
+        Turn_Off(LED_Red);
+        Turn_Off(LED_RGB_R);
+        Turn_Off(LED_RGB_G);
+        Turn_Off(LED_RGB_B);
+        Turn_On(LED_RGB_G);
+
+        __DSB();
+        __sleep();
+
+        full_system->Query_Received = 0;
+        bt_send_string("S");
+
         // Check if the Reception has started,
         // and change the event to RX_Start
-        if(RX_Flag == 1)
+        if(full_system->RX_Flag == 1)
         {
             Set_Event(sm, eRX_Start);
-            RX_Flag = 0;
+            full_system->RX_Flag = 0;
         }
     }
     else if(sm->event == eRX_Start)
     {
-        put_string("State: Receive Data; Event: RX_Start\n\r");
         // Wait till Reception is finished
-        while(RX_Complete == 0);
+        while(full_system->RX_Complete == 0);
+
         // As it finishes, change the event
-        RX_Complete = 0;
+        // Reset the flag
+        full_system->RX_Complete = 0;
         Set_Event(sm, eRX_Finish);
     }
     else if(sm->event == eRX_Finish)
     {
-        put_string("State: Receive Data; Event: RX_Finish\n\r");
         Set_State(sm, sProcess_Data);
     }
     else
@@ -140,19 +132,30 @@ static inline void Process_Data_State(state_machine_t* sm, full_system_state_t* 
 {
     if(sm->event == eRX_Finish)
     {
+        full_system->Checksum_Error = 0;
+        full_system->CRC_Error = 0;
+
         // Process Data here
-        put_string("State: Process Data; Event: RX_Finish\n\r");
-        checksum_error = 0;
-        crc_error = 0;
-        // Change the even at the end of it
-        if(checksum_error)
+        if(CRC_Check((uint8_t *)buffer, &full_system->RX_Index) == CRC_Error)
         {
-            checksum_error = 0;
+            full_system->CRC_Error = 1;
+        }
+
+        hex_parse(buffer, full_system->Checksum_Error);
+
+        // Change the even at the end of it
+        if(full_system->Checksum_Error)
+        {
+            Turn_On(LED_Red);
+            delay(5000);
+            full_system->Checksum_Error = 0;
             Set_Event(sm, eChecksum_Error);
         }
-        else if(crc_error)
+        else if(full_system->CRC_Error)
         {
-            crc_error = 0;
+            Turn_On(LED_Red);
+            delay(5000);
+            full_system->CRC_Error = 0;
             Set_Event(sm, eCRC_Error);
         }
         else
@@ -162,20 +165,17 @@ static inline void Process_Data_State(state_machine_t* sm, full_system_state_t* 
     }
     else if(sm->event == eProcessing_Done)
     {
-        put_string("State: Process Data; Event: Processing Done\n\r");
         Set_State(sm, sProgramming_Ready);
     }
     else if(sm->event == eChecksum_Error)
     {
-        put_string("State: Process Data; Event: Checksum Error\n\r");
-        // Send message to Transmitter
+        bt_send_string("f");
         Set_State(sm, sReceive_Data);
         Set_Event(sm, eStart);
     }
     else if(sm->event == eCRC_Error)
     {
-        put_string("State: Process Data; Event: CRC Error\n\r");
-        // Send message to Transmitter
+        bt_send_string("F");
         Set_State(sm, sReceive_Data);
         Set_Event(sm, eStart);
     }
@@ -190,17 +190,17 @@ static inline void Programming_Ready_State(state_machine_t* sm, full_system_stat
 {
     if(sm->event == eProcessing_Done)
     {
-        put_string("State: Programming Ready; Event: Processing Done\n\r");
+        Turn_Off(LED_RGB_G);
+        Turn_On(LED_RGB_B);
         // Wait here till button is pressed
-        while(Button_Pressed_Flag != 1);
+        while(full_system->Button_Pressed_Flag != 1);
 
-        Button_Pressed_Flag = 0;
+        full_system->Button_Pressed_Flag = 0;
         // Change event when button is pressed
         Set_Event(sm, eButton_Pressed);
     }
     else if(sm->event == eButton_Pressed)
     {
-        put_string("State: Programming Ready; Event: Button Pressed\n\r");
         Set_State(sm, sChip_Erase);
     }
     else
@@ -215,20 +215,21 @@ static inline void Chip_Erase_State(state_machine_t* sm, full_system_state_t* fu
     if(sm->event == eButton_Pressed)
     {
         // Conduct a chip erase action
-        put_string("State: Chip Erase; Event: Button Pressed\n\r");
+        programming_enable();
+        chip_erase();
         // Change event
         Set_Event(sm, eChip_Erased);
     }
     else if(sm->event == eVerify_Failed)
     {
         // Conduct a chip erase action
-        put_string("State: Chip Erase; Event: Verify Fail\n\r");
+        programming_enable();
+        chip_erase();
         // Change event
         Set_Event(sm, eChip_Erased);
     }
     else if(sm->event == eChip_Erased)
     {
-        put_string("State: Chip Erase; Event: Chip Erased\n\r");
         Set_State(sm, sProgramming);
     }
     else
@@ -242,19 +243,19 @@ static inline void Programming_State(state_machine_t* sm, full_system_state_t* f
 {
     if(sm->event == eChip_Erased)
     {
-        put_string("State: Programming; Event: Chip Erased\n\r");
         Set_Event(sm, eProgramming);
     }
     else if(sm->event == eProgramming)
     {
         // Do programming actions
-        put_string("State: Programming; Event: Programming\n\r");
+        while(poll_busy() == ispBUSY);
+        programming_enable();
+        program();
         // Change the event to programming at the end
         Set_Event(sm, eProgramming_Done);
     }
     else if(sm->event == eProgramming_Done)
     {
-        put_string("State: Programming; Event: Programming Done\n\r");
         Set_State(sm, sVerify);
     }
     else
@@ -268,18 +269,20 @@ static inline void Verify_State(state_machine_t* sm, full_system_state_t* full_s
 {
     if(sm->event == eProgramming_Done)
     {
-        put_string("State: Verify; Event: Programming Done\n\r");
         Set_Event(sm, eVerify);
     }
     else if(sm->event == eVerify)
     {
         // Verify Memory Contents
-        put_string("State: Verify; Event: Verify\n\r");
+        isp_status_t Verification_Status = verify();
 
-        Verification_Successful = 1;
+        if(Verification_Status == ispVERIFYPASS)
+            full_system->Verification_Successful = 1;
+        else
+            full_system->Verification_Successful = 0;
 
         // Change event as per verification result
-        if(Verification_Successful)
+        if(full_system->Verification_Successful)
         {
             Set_Event(sm, eVerify_Successful);
         }
@@ -290,16 +293,17 @@ static inline void Verify_State(state_machine_t* sm, full_system_state_t* full_s
     }
     else if(sm->event == eVerify_Successful)
     {
-        put_string("State: Verify; Event: Verify Successful\n\r");
         // Send Programming Done message to Transmitter
+        bt_send_string("C");
+        Reset_High();
 
         Set_Event(sm, eStart);
         Set_State(sm, sReceive_Data);
     }
     else if(sm->event == eVerify_Failed)
     {
-        put_string("State: Verify; Event: Verify Failed\n\r");
-        // Do chip erase based  restart 3 times and then go to error
+        Turn_Off(LED_RGB_B);
+        Turn_On(LED_RGB_R);
         Set_State(sm, sChip_Erase);
     }
     else
@@ -311,8 +315,20 @@ static inline void Verify_State(state_machine_t* sm, full_system_state_t* full_s
 
 static inline void Error_State(state_machine_t* sm, full_system_state_t* full_system)
 {
-    put_string("State: Error\n\r");
-    while(1);
+    bt_send_string("E");
+    Turn_On(LED_Red);
+    while(1){
+        Turn_Off(LED_Red);
+        Turn_Off(LED_RGB_R);
+        Turn_Off(LED_RGB_G);
+        Turn_Off(LED_RGB_B);
+        delay(1000);
+        Turn_On(LED_Red);
+        Turn_On(LED_RGB_R);
+        Turn_On(LED_RGB_G);
+        Turn_On(LED_RGB_B);
+        delay(1000);
+    }
 }
 
 /*

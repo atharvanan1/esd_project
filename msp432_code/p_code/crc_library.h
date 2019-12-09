@@ -8,11 +8,16 @@
 #ifndef CHECKSUM_H_
 #define CHECKSUM_H_
 
-#endif /* CHECKSUM_H_ */
+#include "common.h"
 
-#include "msp.h"
+typedef enum {
+    CRC_Correct,
+    CRC_Error,
+} crc_status_t;
 
 void CRC_Init(void);
 void CRC_calculation(uint8_t input_data);
-void CRC_Result_master(uint16_t *m_result);
-void CRC_Result_slave(uint16_t *s_result, uint16_t m_result);
+uint16_t CRC_Result(void);
+crc_status_t CRC_Check(uint8_t* buffer, volatile uint16_t* RX_Index);
+
+#endif /* CHECKSUM_H_ */

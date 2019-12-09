@@ -8,7 +8,7 @@
 #ifndef SPI_LIBRARY_H_
 #define SPI_LIBRARY_H_
 #include <stdint.h>
-#include "msp.h"
+#include "common.h"
 
 void spi_init(void);
 void spi_send(uint8_t data);

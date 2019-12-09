@@ -5,7 +5,7 @@
  *      Author: Hp
  */
 
-#include <uart_library.h>
+#include "uart_library.h"
 
 void bt_send_string(char *str)
 {
@@ -31,21 +31,7 @@ void UART_Init(void)
     EUSCI_A2->CTLW0 &= ~EUSCI_A_CTLW0_SWRST; // Initialize eUSCI
     EUSCI_A2->IFG &= ~EUSCI_A_IFG_RXIFG;    // Clear eUSCI RX interrupt flag
     EUSCI_A2->IE |= EUSCI_A_IE_RXIE;        // Enable USCI_A0 RX interrupt
-}
 
-void EUSCIA2_IRQHandler(void)
-{
-    if (EUSCI_A2->IFG & EUSCI_A_IFG_RXIFG)
-    {
-        P2->OUT ^= BIT1;
-        if(EUSCI_A2->RXBUF == (uint8_t) EOF)
-        {
-            CRC_Flag = 1;
-        }
-        else
-        {
-            buffer[RX_Index]=EUSCI_A2->RXBUF;
-            RX_Index +=1;
-        }
-    }
+    __enable_irq();
+    NVIC->ISER[0] = 1 << ((EUSCIA2_IRQn) & 31);
 }

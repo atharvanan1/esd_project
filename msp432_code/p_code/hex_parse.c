@@ -8,19 +8,19 @@
 
 #include "hex_parse.h"
 
-void hex_parse(hex_file_t* file)
+void hex_parse(int8_t* buffer, uint8_t Checksum_Error)
 {
-    char* line[50];
+    int8_t* line[50];
     uint16_t index = 0;
     uint16_t line_count = 0;
     int8_t ch = 0;
 
     // Line Zero will always start from first address
-    line[0] = file->file_pointer;
+    line[0] = buffer;
 
     index++;
     // Till the end of file - change the EOF value
-    while((ch = *(file->file_pointer + index)) != '\0')
+    while((ch = *(buffer + index)) != '\0')
     {
         // Registering new lines as lines, and added them into line
         // buffer.
@@ -31,7 +31,7 @@ void hex_parse(hex_file_t* file)
         if(ch == ':')
         {
             line_count++;
-            line[line_count] = file->file_pointer + index;
+            line[line_count] = buffer + index;
         }
         index++;
     }
@@ -42,10 +42,15 @@ void hex_parse(hex_file_t* file)
     for(uint8_t index = 0; index < line_count; index++)
     {
         commands[index] = hex_line_parse(line[index]);
+        if(commands[index].checksum_validity == checksumValid)
+        {
+            Checksum_Error = 1;
+            break;
+        }
     }
 }
 
-command_t hex_line_parse(const char* line)
+command_t hex_line_parse(const int8_t* line)
 {
     command_t line_command;
     line_command.address = 0;

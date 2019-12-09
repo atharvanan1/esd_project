@@ -3,12 +3,11 @@
 
 #ifndef STATE_MACHINE_STATE_MACHINE_H_
 #define STATE_MACHINE_STATE_MACHINE_H_
-#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "led_control.h"
 #include "isp_commands.h"
-#include "hex_parse.h"
+#include "crc_library.h"
+#include "uart_library.h"
 
 typedef enum {
     eStart,
@@ -37,24 +36,10 @@ typedef enum {
     sError,
 } state_t;
 
-typedef enum {
-    errNO_Error = 0x00,
-    errSM_Error,
-    errTarget_Error,
-    errDisconnect,
-} error_t;
-
 typedef struct {
     state_t state;
     event_t event;
 } state_machine_t;
-
-typedef struct {
-    uint8_t reception_ready;
-    error_t error_flag;
-    uint8_t button_pressed;
-    uint8_t command_write;
-} full_system_state_t;
 
 void End_Program(void);
 state_machine_t* State_Machine_Init(void);

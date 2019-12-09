@@ -15,6 +15,19 @@ void ISP_Init(void)
     // Initialize reset pin
     P3->OUT |= BIT0;
     P3->DIR |= BIT0;
+
+    // Initialize P1.1 as input for programming button
+    P1->DIR &= ~(uint8_t) BIT1;
+    P1->OUT |= BIT1;
+    P1->REN |= BIT1;                         // Enable pull-up resistor (P1.1 output high)
+    P1->SEL0 &= ~BIT0;
+    P1->SEL1 &= ~BIT0;
+    P1->IES |= BIT1;                         // Interrupt on high-to-low transition
+    P1->IFG = 0;                            // Clear all P1 interrupt flags
+    P1->IE |= BIT1;                          // Enable interrupt for P1.1
+
+    // Enable Port 1 interrupt on the NVIC
+    NVIC->ISER[1] = 1 << ((PORT1_IRQn) & 31);
 }
 
 void delay(uint32_t time)
@@ -22,6 +35,16 @@ void delay(uint32_t time)
     time *= 300;
     // TODO: devise a method to add delay with microseconds as input
     for(volatile uint32_t index = 0; index < time; index++);
+}
+
+void Reset_High(void)
+{
+    P3->OUT |= BIT0;
+}
+
+void Reset_Low(void)
+{
+    P3->OUT &= ~BIT0;
 }
 
 void command_execute(uint8_t* tx_buff, uint8_t* rx_buff)
@@ -40,11 +63,21 @@ void program(void)
         program_flash(commands[index]);
     }
 }
+
+isp_status_t verify(void)
+{
+    for(uint8_t index = 0; index < 200; index++)
+    {
+        if(verify_flash(commands[index]) == ispVERIFYFAIL)
+            return ispVERIFYFAIL;
+    }
+    return ispVERIFYPASS;
+}
 /*---------------Execution Instructions---------------*/
 
 isp_status_t programming_enable(void)
 {
-    P3->OUT &= ~BIT0;
+    Reset_Low();
 
     delay(20);
 
@@ -63,7 +96,7 @@ isp_status_t programming_enable(void)
     }
 }
 
-isp_status_t chip_erase(void)
+void chip_erase(void)
 {
     // Poll busy flag
     while(poll_busy() == ispBUSY);
@@ -76,7 +109,7 @@ isp_status_t chip_erase(void)
     // TODO: Add delay of 9 ms or maybe poll? Test the code out
     delay(20);
 
-    P3->OUT |= BIT0;
+    Reset_High();
 }
 
 isp_status_t poll_busy(void)
@@ -115,15 +148,45 @@ void program_flash(command_t command)
             }
         }
         write_flash_page(command.address);
-
-        while(poll_busy() == ispBUSY);
-
-    //    if(verify_flash(command.address, command.data) == ispVERIFYFAIL);
-    //    {
-    //        while(1);
-    //    }
     }
 }
+
+isp_status_t verify_flash(command_t command)
+{
+    uint8_t tmp_array[16];
+    uint16_t start_address = command.address;
+
+    if(command.data_type != 0x00)
+        ;
+    else if(command.size == 0)
+        ;
+    else
+    {
+        for(uint8_t array_index = 0, address_index = 0; array_index < 16; array_index++)
+        {
+            while(poll_busy() == ispBUSY);
+            if(array_index % 2 == 0)
+            {
+                tmp_array[array_index] = read_flash_low(start_address + address_index);
+            }
+            else
+            {
+                tmp_array[array_index] = read_flash_high(start_address + address_index);
+                address_index++;
+            }
+        }
+
+        for(uint8_t index = 0; index < 16; index++)
+        {
+            if(tmp_array[index] != command.data[index])
+            {
+                return ispVERIFYFAIL;
+            }
+        }
+    }
+    return ispVERIFYPASS;
+}
+
 
 /*-----------------Read Instructions-------------------*/
 uint8_t read_signature_byte(sig_byte_t signature_byte)
@@ -275,33 +338,6 @@ void write_ex_fuse_bits(uint8_t data)
     uint8_t Command[4] = {0xAC, 0xA4, 0x00, data};
     uint8_t RXBuff[4] = {0x00, 0x00, 0x00, 0x00};
     command_execute(Command, RXBuff);
-}
-
-/*--------------Verify Instructions--------------*/
-
-isp_status_t verify_flash(uint16_t start_address, uint8_t* data_array)
-{
-    uint8_t tmp_array[16];
-    for(uint8_t array_index = 0, address_index = 0; array_index < 16; array_index++)
-    {
-        if(array_index & 0x01 != 0)
-        {
-            tmp_array[array_index] = read_flash_low(start_address + address_index);
-        }
-        else
-        {
-            tmp_array[array_index] = read_flash_high(start_address + address_index);
-            address_index++;
-        }
-    }
-    for(uint8_t index = 0; index < 16; index++)
-    {
-        if(tmp_array[index] != data_array[index])
-        {
-            return ispVERIFYFAIL;
-        }
-    }
-    return ispVERIFYPASS;
 }
 
 

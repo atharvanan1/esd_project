@@ -8,7 +8,7 @@
 #ifndef UART_H_
 #define UART_H_
 
-#include "msp.h"
+#include "common.h"
 
 #define EOF (-1)
 
@@ -18,6 +18,5 @@ extern volatile uint8_t CRC_Flag;
 
 void bt_send_string(char *str);
 void UART_Init(void);
-void EUSCIA2_IRQHandler(void);
 
 #endif /* UART_H_ */

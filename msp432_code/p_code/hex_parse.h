@@ -9,6 +9,7 @@
 #define HEX_PARSE_H_
 #include <stdint.h>
 #include <stdlib.h>
+#include "common.h"
 
 #define START_CHARACTER     1
 #define ADDRESS_WIDTH       4
@@ -41,8 +42,8 @@ typedef struct {
 
 // Function Prototypes
 uint16_t calculateNumberOfLines(const char* buffer, uint16_t length);
-void hex_parse(hex_file_t* file);
-command_t hex_line_parse(const char* line);
+void hex_parse(int8_t* buffer, uint8_t Checksum_Error);
+command_t hex_line_parse(const int8_t* line);
 
 extern command_t commands[200];
 

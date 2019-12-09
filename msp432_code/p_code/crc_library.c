@@ -5,7 +5,7 @@
  *      Author: Hp
  */
 
-#include <crc_library.h>
+#include "crc_library.h"
 
 
 /*********************************************************
@@ -38,35 +38,40 @@ Collect result of CRC (MASTER SIDE)
 
 **********************************************************/
 
-void CRC_Result_master(uint16_t *m_result)
+uint16_t CRC_Result(void)
 {
-    *m_result = CRC32->INIRES16;
+    return CRC32->INIRES16;
 }
 
-/*********************************************************
-
-Collect and compare result of CRC with CRC obtained from master
-
-**********************************************************/
-
-void CRC_Result_slave(uint16_t *s_result, uint16_t m_result)
+crc_status_t CRC_Check(uint8_t* buffer, volatile uint16_t* RX_Index)
 {
-    *s_result = CRC32->INIRES16;
-// Compare CRC results
-    if(*s_result == m_result)
-        {
-        P1->OUT ^= BIT0;
-// SEND OK BACK TO MASTER AND CARRY ON
+    uint8_t CRC;
+    crc_status_t CRC_Status;
 
+    CRC_Init();
 
+    for(uint16_t CRC_Index = 0; CRC_Index < (*RX_Index-1); CRC_Index++ )
+    {
+       CRC_calculation(buffer[CRC_Index]);
+    }
 
-        }
+    CRC = (uint8_t) CRC_Result();
+
+    *RX_Index = *RX_Index - 1;
+    if(buffer[*RX_Index] != CRC)
+    {
+      Turn_On(LED_RGB_R);
+      CRC_Status = CRC_Error;
+    }
     else
-        {
-        P2->OUT ^=BIT1;
-// SEND TRANSMISSION ERROR TO MASTER AND ASK IT to SEND CODE AGAIN
+    {
+      Turn_On(LED_RGB_B);
+      CRC_Status = CRC_Correct;
+    }
 
+    buffer[*RX_Index] = '\n';
+    *RX_Index = *RX_Index + 1;
+    buffer[*RX_Index] = '\0';
 
-
-        }
+    return CRC_Status;
 }

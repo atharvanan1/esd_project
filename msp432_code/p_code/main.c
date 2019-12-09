@@ -38,45 +38,11 @@
 
 #include "main.h"
 
-//state_machine_t* StateMachine = NULL;
-full_system_state_t full_system = {0, errNO_Error, 0, 0};
+state_machine_t* State_Machine = NULL;
+full_system_state_t system_state_data = {/*Reset Values*/};
+full_system_state_t* system_state = &system_state_data;
 
-
-/***********************************************************************
-Programming Flag Set when Code is received and CRC comparison is correct
-************************************************************************/
-uint8_t Program_Flag = 0;
-// RX Index Info
-volatile uint16_t RX_Index = 0;
-/***********************************************************************
-CRC_Index is used while performing CRC on input data
-************************************************************************/
-volatile uint16_t CRC_Index = 0;
-/***********************************************************************
-CRC_Result stores the result of the CRC
-************************************************************************/
-uint16_t CRC_Result = 0;
-/***********************************************************************
-CRC_Flag is used to start CRC when data is received
-************************************************************************/
-volatile uint8_t CRC_Flag = 0;
-/*******************************************************
- Start Bit to be set when slave is ready to receive code
-********************************************************/
-uint8_t Start = 0;
-
-int8_t buffer[] = ":100000000C9434000C943E000C943E000C943E0082\r\n\
-:100010000C943E000C943E000C943E000C943E0068\r\n\
-:100020000C943E000C943E000C943E000C943E0058\r\n\
-:100030000C943E000C943E000C943E000C943E0048\r\n\
-:100040000C943E000C943E000C943E000C943E0038\r\n\
-:100050000C943E000C943E000C943E000C943E0028\r\n\
-:100060000C943E000C943E0011241FBECFEFD8E04C\r\n\
-:10007000DEBFCDBF0E9440000C9456000C940000DF\r\n\
-:10008000219A299A2FE38DE093E0215080409040FF\r\n\
-:10009000E1F700C0000029982FE38DE093E02150A4\r\n\
-:1000A00080409040E1F700C00000EBCFF894FFCF14\r\n\
-:00000001FF\r\n\0";
+int8_t buffer[8400];
 command_t commands[200];
 
 void Init(void)
@@ -93,51 +59,60 @@ void Init(void)
     CS->KEY = 0;                            // Lock CS module from unintended accesses
 
     LED_Init();
-//    UART_Init();
-//    ISP_Init();
-//    StateMachine = State_Machine_Init();
+    UART_Init();
+    ISP_Init();
+    State_Machine = State_Machine_Init();
 }
 
 int main(void)
 {
     Init();
 
-    // Configure UART pins
-    P1->SEL0 |= BIT2 | BIT3;                // set 2-UART pin as secondary function
-
-    // Configure UART
-    EUSCI_A0->CTLW0 |= EUSCI_A_CTLW0_SWRST; // Put eUSCI in reset
-    EUSCI_A0->CTLW0 = EUSCI_A_CTLW0_SWRST | // Remain eUSCI in reset
-            EUSCI_B_CTLW0_SSEL__SMCLK;      // Configure eUSCI clock source for SMCLK
-    // Baud Rate calculation
-    // 12000000/(16*9600) = 78.125
-    // Fractional portion = 0.125
-    // User's Guide Table 21-4: UCBRSx = 0x10
-    // UCBRFx = int ( (78.125-78)*16) = 2
-    EUSCI_A0->BRW = 78;                     // 12000000/16/9600
-    EUSCI_A0->MCTLW = (2 << EUSCI_A_MCTLW_BRF_OFS) |
-            EUSCI_A_MCTLW_OS16;
-
-    EUSCI_A0->CTLW0 &= ~EUSCI_A_CTLW0_SWRST; // Initialize eUSCI
-    EUSCI_A0->IFG &= ~EUSCI_A_IFG_RXIFG;    // Clear eUSCI RX interrupt flag
-
-    state_machine_t* state_machine = NULL;
-    state_machine = State_Machine_Init();
     while(1)
     {
-        Event_Handler(state_machine, &full_system);
+        Event_Handler(State_Machine, system_state);
     }
 }
-//
-//int putchar(int _x)
-//{
-//    while(!(EUSCI_A0->IFG & EUSCI_A_IFG_TXIFG));
-//    EUSCI_A0->TXBUF = _x;
-//    return _x;
-//}
-//
-//int getchar(void)
-//{
-//    while(!(EUSCI_A0->IFG & EUSCI_A_IFG_RXIFG));
-//    return EUSCI_A0->RXBUF;
-//}
+
+void EUSCIA2_IRQHandler(void)
+{
+    if (EUSCI_A2->IFG & EUSCI_A_IFG_RXIFG)
+    {
+//        Turn_On(LED_Red);
+        int8_t ch = EUSCI_A2->RXBUF;
+        if(State_Machine->state == sReceive_Data)
+        {
+            system_state->RX_Flag = 1;
+            if(ch == 'R')
+            {
+                system_state->Query_Received = 1;
+            }
+            else if(ch == EOF)
+            {
+                system_state->RX_Complete = 1;
+            }
+            else
+            {
+                buffer[system_state->RX_Index] = ch;
+                system_state->RX_Index +=1;
+            }
+        }
+    }
+}
+
+void PORT1_IRQHandler(void)
+{
+    volatile uint32_t i;
+
+    // Toggling the output on the LED
+    if(P1->IFG & BIT1)
+    {
+        // Delay for switch debounce
+        for(i = 0; i < 10000; i++)
+
+        P1->IFG &= ~BIT1;
+
+        system_state->Button_Pressed_Flag = 1;
+    }
+}
+

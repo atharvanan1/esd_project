@@ -60,12 +60,10 @@ crc_status_t CRC_Check(uint8_t* buffer, volatile uint16_t* RX_Index)
     *RX_Index = *RX_Index - 1;
     if(buffer[*RX_Index] != CRC)
     {
-      Turn_On(LED_RGB_R);
       CRC_Status = CRC_Error;
     }
     else
     {
-      Turn_On(LED_RGB_B);
       CRC_Status = CRC_Correct;
     }
 

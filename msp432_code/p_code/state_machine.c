@@ -83,15 +83,34 @@ void Set_State(state_machine_t* sm, state_t state)
 /*-------------------------------*/
 /* State Machine State Functions */
 /*-------------------------------*/
+
+static inline void State_Init(state_machine_t* sm, full_system_state_t* full_system)
+{
+    Turn_Off(LED_Red);
+    Turn_Off(LED_RGB_R);
+    Turn_Off(LED_RGB_G);
+    Turn_Off(LED_RGB_B);
+    Turn_On(LED_RGB_G);
+
+    for(uint16_t index = 0; index < 8400; index++)
+        buffer[index] = 0;
+
+    full_system->error_flag = errNO_Error;
+    full_system->Query_Received = 0;
+    full_system->Button_Pressed_Flag = 0;
+    full_system->Checksum_Error = 0;
+    full_system->CRC_Error = 0;
+    full_system->RX_Complete = 0;
+    full_system->RX_Flag = 0;
+    full_system->Verification_Successful = 0;
+    full_system->RX_Index = 0;
+}
+
 static inline void Receive_Data_State(state_machine_t* sm, full_system_state_t* full_system)
 {
     if(sm->event == eStart)
     {
-        Turn_Off(LED_Red);
-        Turn_Off(LED_RGB_R);
-        Turn_Off(LED_RGB_G);
-        Turn_Off(LED_RGB_B);
-        Turn_On(LED_RGB_G);
+        State_Init(sm, full_system);
 
         __DSB();
         __sleep();
@@ -248,8 +267,8 @@ static inline void Programming_State(state_machine_t* sm, full_system_state_t* f
     else if(sm->event == eProgramming)
     {
         // Do programming actions
-        while(poll_busy() == ispBUSY);
         programming_enable();
+        while(poll_busy() == ispBUSY);
         program();
         // Change the event to programming at the end
         Set_Event(sm, eProgramming_Done);

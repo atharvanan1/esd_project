@@ -1,3 +1,17 @@
+/*
+ * File - BL_Master.c (main file)
+ * Brief -  Master side code takes input from PC via EUSCIA_A0 and send output via EUSCIA_A2
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
+ */
+
+
+
+
+
+
+
 /******************************************************************************
 
  MASTER SIDE CODE

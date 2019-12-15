@@ -1,9 +1,11 @@
 /*
- * AT_Commands.h
- *
- *  Created on: 28-Nov-2019
- *      Author: Hp
+ * File - AT_Commands.h
+ * Brief - Contains all the AT commands that were used to configure the HC-05
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
  */
+
 
 #ifndef AT_COMMANDS_H_
 #define AT_COMMANDS_H_

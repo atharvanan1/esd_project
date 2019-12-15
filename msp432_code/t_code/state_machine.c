@@ -1,8 +1,9 @@
 /*
- * state_machine.c
- *
- *  Created on: 07-Dec-2019
- *      Author: Hp
+ * File - state_machine.c
+ * Brief -  Contains all the state machine related functions
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #include "state_machine.h"
@@ -101,6 +102,8 @@ void Set_State(state_machine_t* sm, state_t state)
  *
  */
 
+// State in which programmer notifies the transmitter that it is ready to receive data from the transmitter
+
 static inline void Receive_Data_State(state_machine_t* sm, full_system_state_t* full_system)
 {
     if(sm->event==eStart)
@@ -139,6 +142,8 @@ static inline void Receive_Data_State(state_machine_t* sm, full_system_state_t* 
 
 }
 
+// State in which the programmer performs CRC check
+
 static inline void  Process_Data_State(state_machine_t* sm, full_system_state_t* full_system)
 {
     if(sm->event == eRX_Finish)
@@ -168,6 +173,8 @@ static inline void  Process_Data_State(state_machine_t* sm, full_system_state_t*
         }
 
 }
+
+// State in which transmitter queries the programmer if its ready to receive the program
 
 static inline void  Query_Programmer_State(state_machine_t* sm, full_system_state_t* full_system)
 {
@@ -204,6 +211,8 @@ static inline void  Query_Programmer_State(state_machine_t* sm, full_system_stat
 
 }
 
+// State in which the transmitter completes transmission
+
 static inline void  Transmission(state_machine_t* sm, full_system_state_t* full_system)
 {
 
@@ -213,6 +222,12 @@ static inline void  Transmission(state_machine_t* sm, full_system_state_t* full_
         Set_Event(sm, eTransmit);
 
         }
+    else if(sm->event == eCRC_Error)
+        {
+        UART_printf("CRC error transmit again");
+        Set_Event(sm, eTransmit);
+        }
+
     else if(sm->event == eTransmit)
     {
         // Transmit actions here
@@ -220,7 +235,6 @@ static inline void  Transmission(state_machine_t* sm, full_system_state_t* full_
 
         UART_printf("Transmission State : eTransmit\n\r");
         SD_Transmission(&ISR_index, buffer);
-        // polling transmission here
         Set_Event(sm, eTransmit_Complete);
     }
     else if(sm->event == eTransmit_Complete)
@@ -238,14 +252,13 @@ static inline void  Transmission(state_machine_t* sm, full_system_state_t* full_
 
 }
 
+// State in which the transmitter waits for confirmation from the programmer
+
 static inline void  Wait_For_Validity_State(state_machine_t* sm, full_system_state_t* full_system)
 {
     if(sm->event == eTransmit_Complete)
         {
 //        UART_printf("Wait_For_Validity State : eTransmit_Complete\n\r");
-
-        // Poll RX here
-        // Add conditions for your Errors
 
         //Wait for response from programmer
             if(full_system->CRC_Failure == 1)
@@ -276,7 +289,7 @@ static inline void  Wait_For_Validity_State(state_machine_t* sm, full_system_sta
         {
 //        UART_printf("Wait_For_Validity State : eCRC_Error\n\r");
 
-        Set_State(sm, sError);
+        Set_State(sm, sTransmission);
 
         }
     else if(sm->event == eChecksum_Error)
@@ -299,6 +312,8 @@ static inline void  Wait_For_Validity_State(state_machine_t* sm, full_system_sta
         }
 }
 
+
+// Error State
 static inline void Error_State(state_machine_t* sm, full_system_state_t* full_system)
 {
     P1->OUT |= BIT0;

@@ -153,7 +153,7 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 BL_MASTER.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"C:/ti/ccs910/ccs/tools/compiler/ti-cgt-arm_18.12.2.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=none --define=__MSP432P401R__ --define=DeviceFamily_MSP432P401x -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on -z -m"BL_MASTER.map" --heap_size=1000 --stack_size=20000 -i"C:/ti/simplelink_msp432p4_sdk_3_30_00_13/source" -i"C:/ti/ccs910/ccs/tools/compiler/ti-cgt-arm_18.12.2.LTS/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="BL_MASTER_linkInfo.xml" --rom_model -o "BL_MASTER.out" $(ORDERED_OBJS)
+	"C:/ti/ccs910/ccs/tools/compiler/ti-cgt-arm_18.12.2.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=none --define=__MSP432P401R__ --define=DeviceFamily_MSP432P401x -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on -k --asm_listing -z -m"BL_MASTER.map" --heap_size=1000 --stack_size=20000 -i"C:/ti/simplelink_msp432p4_sdk_3_30_00_13/source" -i"C:/ti/ccs910/ccs/tools/compiler/ti-cgt-arm_18.12.2.LTS/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="BL_MASTER_linkInfo.xml" --rom_model -o "BL_MASTER.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
@@ -167,8 +167,10 @@ BL_MASTER.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
+	-$(RM) "BL_Master.lst" "CRC.lst" "UART.lst" "state_machine.lst" "system_msp432p401r.lst" "ccs/startup_msp432p401r_ccs.lst" 
 	-$(RM) "BL_Master.obj" "CRC.obj" "UART.obj" "state_machine.obj" "system_msp432p401r.obj" "ccs\startup_msp432p401r_ccs.obj" 
 	-$(RM) "BL_Master.d" "CRC.d" "UART.d" "state_machine.d" "system_msp432p401r.d" "ccs\startup_msp432p401r_ccs.d" 
+	-$(RM) "BL_Master.asm" "CRC.asm" "UART.asm" "state_machine.asm" "system_msp432p401r.asm" "ccs/startup_msp432p401r_ccs.asm" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

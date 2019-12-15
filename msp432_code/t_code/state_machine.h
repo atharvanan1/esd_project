@@ -1,8 +1,9 @@
 /*
- * state_machine.h
- *
- *  Created on: 07-Dec-2019
- *      Author: Hp
+ * File - state_machine.h
+ * Brief -  Contains all the declarations for the state machine related functions
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef STATE_MACHINE_STATE_MACHINE_H_

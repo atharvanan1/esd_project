@@ -2,7 +2,7 @@
  * spi_library.c
  *
  *  Created on: Dec 3, 2019
- *      Author: athar
+ *      Author: Atharva 
  */
 
 #include "spi_library.h"

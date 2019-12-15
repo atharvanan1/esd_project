@@ -2,11 +2,24 @@
  * hex_parse.c
  *
  *  Created on: Dec 3, 2019
- *      Author: athar
+ *      Author: atharva 
  */
 
 
 #include "hex_parse.h"
+
+/*
+************************************************************
+Function Name: hex_parse
+************************************************************
+Purpose: This function executes complete hex parsing, using
+line parsing function
+************************************************************
+Arguments: int8_t* buffer, uint8_t Checksum_Error
+************************************************************
+Returns: NONE
+************************************************************
+*/
 
 void hex_parse(int8_t* buffer, uint8_t Checksum_Error)
 {
@@ -49,6 +62,19 @@ void hex_parse(int8_t* buffer, uint8_t Checksum_Error)
         }
     }
 }
+
+/*
+************************************************************
+Function Name: hex_line_parse
+************************************************************
+Purpose: Function parses individual line; actual parsing is 
+done here
+************************************************************
+Arguments: const int8_t* line
+************************************************************
+Returns: struct command_t for various parameters 
+************************************************************
+*/
 
 command_t hex_line_parse(const int8_t* line)
 {
@@ -127,19 +153,6 @@ command_t hex_line_parse(const int8_t* line)
 
     // This pointer shall be freed by function that has finished usage
     return line_command;
-}
-
-uint16_t calculateNumberOfLines(const char* buffer, uint16_t length)
-{
-    uint16_t number_of_lines = 0;;
-    for(uint16_t index = 0; index < length; index++)
-    {
-        if(*(buffer + index) == '\n')
-        {
-            number_of_lines++;
-        }
-    }
-    return number_of_lines;
 }
 
 

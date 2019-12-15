@@ -2,7 +2,7 @@
  * hex_parse.h
  *
  *  Created on: Dec 3, 2019
- *      Author: athar
+ *      Author: atharva 
  */
 
 #ifndef HEX_PARSE_H_

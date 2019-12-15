@@ -1,8 +1,9 @@
 /*
- * Checksum.c
- *
- *  Created on: 02-Dec-2019
- *      Author: Hp
+ * File - CRC.c
+ * Brief -  Contains all the CRC related functions
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #include <CRC.h>
@@ -44,30 +45,33 @@ void CRC_Result_master(uint16_t *m_result)
     *m_result = CRC32->INIRES16;
 }
 
-/*********************************************************
+/*
+************************************************************
+Function Name: SD_CRC_Processing
+************************************************************
+Purpose: Function is used to perform CRC on the data received from the
+         user
+************************************************************
+Arguments: volatile uint8_t *buffer, uint16_t total_count (count of the data)
+************************************************************
+Returns: NONE
+************************************************************
+*/
 
-Collect and compare result of CRC with CRC obtained from master
-
-**********************************************************/
-
-void CRC_Result_slave(uint16_t *s_result, uint16_t m_result)
+void SD_CRC_Processing(volatile uint8_t *buffer, uint16_t total_count)
 {
-    *s_result = CRC32->INIRES16;
-// Compare CRC results
-    if(*s_result == m_result)
-        {
-        P1->OUT ^= BIT0;
-// SEND OK BACK TO MASTER AND CARRY ON
+    uint16_t index = 0;
 
+        uint16_t CRC_result = 0;
 
+        CRC_Init();
 
-        }
-    else
-        {
-        P2->OUT ^=BIT1;
-// SEND TRANSMISSION ERROR TO MASTER AND ASK IT to SEND CODE AGAIN
+        for(index = 0; index < total_count; index++)
+            {
+                    CRC_calculation(buffer[index]);
+            }
 
-
-
-        }
+        CRC_Result_master(&CRC_result);
+        buffer[total_count] = (uint8_t)CRC_result;
 }
+

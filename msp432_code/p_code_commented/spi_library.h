@@ -1,8 +1,9 @@
 /*
- * spi_library.h
- *
- *  Created on: Dec 3, 2019
- *      Author: athar
+ * File - spi_library.h
+ * Brief -  Contains all the declarations for the SPI related functions
+ * Author - Atharva Nandanwar 
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef SPI_LIBRARY_H_

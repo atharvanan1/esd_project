@@ -1,4 +1,10 @@
-
+/*
+ * File - state_machine.h
+ * Brief -  Contains all the declarations for the state machine related functions
+ * Author - Atharva Nandanwar 
+ * University of Colorado Boulder
+ * Embedded System Design
+ */
 
 
 #ifndef STATE_MACHINE_STATE_MACHINE_H_

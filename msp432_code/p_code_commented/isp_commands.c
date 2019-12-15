@@ -1,8 +1,9 @@
 /*
- * isp_commands.c
- *
- *  Created on: Dec 3, 2019
- *      Author: atharva
+ * File - isp_commands.c
+ * Brief -  Contains all the ISP functions
+ * Author - Atharva Nandanwar
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #include "isp_commands.h"

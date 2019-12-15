@@ -1,8 +1,9 @@
 /*
- * hex_parse.c
- *
- *  Created on: Dec 3, 2019
- *      Author: atharva 
+ * File - hex_parse.h
+ * Brief -  Contains all the hex parsing functions. 
+ * Author - Atharva Nandanwar
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 

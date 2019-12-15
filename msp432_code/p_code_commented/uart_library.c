@@ -1,8 +1,9 @@
 /*
- * UART.c
- *
- *  Created on: 26-Nov-2019
- *      Author: Abhijeet
+ * File - UART.c
+ * Brief -  Contains all the UART related functions
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #include "uart_library.h"

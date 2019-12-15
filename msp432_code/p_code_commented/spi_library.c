@@ -1,8 +1,9 @@
 /*
- * spi_library.c
- *
- *  Created on: Dec 3, 2019
- *      Author: Atharva 
+ * File - spi_library.c
+ * Brief -  Contains all the SPI related functions
+ * Author - Atharva Nandanwar 
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #include "spi_library.h"

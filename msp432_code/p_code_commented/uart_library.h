@@ -1,8 +1,9 @@
 /*
- * UART.h
- *
- *  Created on: 26-Nov-2019
- *      Author: Abhijeet
+ * File - UART.h
+ * Brief -  Contains all the declarations for the UART related functions
+ * Author - Abhijeet Dutt Srivastava
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef UART_H_

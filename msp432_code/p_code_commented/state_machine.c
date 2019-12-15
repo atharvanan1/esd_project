@@ -1,10 +1,9 @@
-/**
-  * File Name       - state_machine.c
-  * Description     - contains state machine subroutines
+/*
+  * File       - state_machine.c
+  * Brief     - contains state machine subroutines
   * Author          - Atharva Nandanwar
-  * Tools           - GNU C Compiler / ARM Compiler Toolchain
-  * Leveraged Code  - https://github.com/EduMacedo99/FEUP-LCOM
-  * URL             -
+  * University of Colorado Boulder
+  * Embedded System Design
   */
 
 #include "state_machine.h"

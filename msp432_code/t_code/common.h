@@ -1,7 +1,7 @@
 /*
  * File - common.h
  * Brief -  Contains all the system wide variables and libraries
- * Author - Abhijeet Dutt Srivastava
+ * Author - Atharva Nandanwar
  * University of Colorado Boulder
  * Embedded System Design
  */

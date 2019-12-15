@@ -1,8 +1,9 @@
 /*
- * main.h
- *
- *  Created on: Dec 5, 2019
- *      Author: athar
+ * File - main.h
+ * Brief -  Added abstraction layer
+ * Author - Atharva Nandanwar 
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef MAIN_H_

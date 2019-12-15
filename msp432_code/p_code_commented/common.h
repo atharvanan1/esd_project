@@ -1,8 +1,9 @@
 /*
- * common.h
- *
- *  Created on: Dec 8, 2019
- *      Author: atharva
+ * File - common.h
+ * Brief -  Contains all the system wide variables and libraries
+ * Author - Atharva Nandanwar
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef COMMON_H_

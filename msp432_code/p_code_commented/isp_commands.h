@@ -1,8 +1,9 @@
 /*
- * isp_commands.h
- *
- *  Created on: Dec 3, 2019
- *      Author: athar
+ * File - isp_commands.h
+ * Brief -  Contains all the declarations for the ISP functions and contains various structs and status enums
+ * Author - Atharva Nandanwar
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef ISP_COMMANDS_H_

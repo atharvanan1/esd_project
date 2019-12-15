@@ -1,8 +1,9 @@
 /*
- * led_control.h
- *
- *  Created on: Dec 5, 2019
- *      Author: athar
+ * File - led_control.h
+ * Brief -  Contains all the declarations for the led related functions
+ * Author - Atharva Nandanwar
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #ifndef LED_CONTROL_H_

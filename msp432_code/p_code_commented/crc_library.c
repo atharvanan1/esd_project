@@ -1,8 +1,9 @@
 /*
- * Checksum.c
- *
- *  Created on: 02-Dec-2019
- *      Author: Abhijeet
+ * File - crc_library.c
+ * Brief -  Contains all the CRC functions. 
+ * Author - Abhijeet Dutt Srivastava 
+ * University of Colorado Boulder
+ * Embedded System Design
  */
 
 #include "crc_library.h"
